@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo, Update
+from telegram import InlineKeyboardMarkup, WebAppInfo, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
+from keyboards.main_keyboard import get_main_menu_keyboard
 
 load_dotenv()
 
@@ -21,12 +22,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "Tap the button below to start browsing jobs 👇"
     )
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(
-            "🔍 Browse Jobs",
-            web_app=WebAppInfo(url=MINI_APP_URL)
-        )]
-    ])
+    keyboard = get_main_menu_keyboard(MINI_APP_URL)
 
     await update.message.reply_text(message, reply_markup=keyboard)
 

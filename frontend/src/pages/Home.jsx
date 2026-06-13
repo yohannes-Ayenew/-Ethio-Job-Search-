@@ -13,6 +13,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
+  const [location, setLocation] = useState('')
+  const [jobType, setJobType] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -25,6 +27,8 @@ export default function Home() {
       const params = new URLSearchParams({ page: pageNum, limit: 10 })
       if (activeCategory !== 'All') params.append('category', activeCategory)
       if (search.trim()) params.append('search', search.trim())
+      if (location) params.append('location', location)
+      if (jobType) params.append('job_type', jobType)
 
       const res = await fetch(`${API_BASE}/jobs?${params}`)
       const data = await res.json()
@@ -53,7 +57,7 @@ export default function Home() {
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [activeCategory, search])
+  }, [activeCategory, search, location, jobType])
 
   useEffect(() => {
     setPage(1)
@@ -86,7 +90,7 @@ export default function Home() {
         </div>
 
         {/* Search */}
-        <div className="relative">
+        <div className="relative mb-3">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30">🔍</span>
           <input
             type="text"
@@ -95,6 +99,39 @@ export default function Home() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-white/[0.06] border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-colors"
           />
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-xl py-2 px-3 text-white text-sm focus:outline-none focus:border-accent/50 transition-colors appearance-none"
+            >
+              <option value="" className="bg-background text-white">All Locations</option>
+              <option value="Addis Ababa" className="bg-background text-white">Addis Ababa</option>
+              <option value="Hawassa" className="bg-background text-white">Hawassa</option>
+              <option value="Mekelle" className="bg-background text-white">Mekelle</option>
+              <option value="Bahir Dar" className="bg-background text-white">Bahir Dar</option>
+              <option value="Remote" className="bg-background text-white">Remote</option>
+            </select>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">▼</span>
+          </div>
+          <div className="relative flex-1">
+            <select
+              value={jobType}
+              onChange={(e) => setJobType(e.target.value)}
+              className="w-full bg-white/[0.06] border border-white/10 rounded-xl py-2 px-3 text-white text-sm focus:outline-none focus:border-accent/50 transition-colors appearance-none"
+            >
+              <option value="" className="bg-background text-white">All Types</option>
+              <option value="Full-time" className="bg-background text-white">Full-time</option>
+              <option value="Part-time" className="bg-background text-white">Part-time</option>
+              <option value="Contract" className="bg-background text-white">Contract</option>
+              <option value="Internship" className="bg-background text-white">Internship</option>
+            </select>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none text-xs">▼</span>
+          </div>
         </div>
       </div>
 

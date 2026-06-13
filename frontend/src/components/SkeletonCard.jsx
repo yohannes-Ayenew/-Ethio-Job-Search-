@@ -1,5 +1,3 @@
-import React from 'react'
-
 export default function SkeletonCard() {
   return (
     <div className="bg-white/5 rounded-2xl p-5 animate-pulse">

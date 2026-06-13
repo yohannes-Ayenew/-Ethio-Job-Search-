@@ -1,4 +1,4 @@
-import React from 'react'
+import PropTypes from 'prop-types'
 
 export default function JobCard({ job, onClick }) {
   const daysLeft = job.deadline
@@ -37,4 +37,17 @@ export default function JobCard({ job, onClick }) {
       </button>
     </div>
   )
+}
+
+JobCard.propTypes = {
+  job: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    title: PropTypes.string.isRequired,
+    company: PropTypes.string.isRequired,
+    location: PropTypes.string,
+    job_type: PropTypes.string,
+    salary: PropTypes.string,
+    deadline: PropTypes.string,
+  }).isRequired,
+  onClick: PropTypes.func.isRequired,
 }

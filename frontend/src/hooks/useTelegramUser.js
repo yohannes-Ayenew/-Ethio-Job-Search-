@@ -1,16 +1,12 @@
-import { useState, useEffect } from 'react'
-import WebApp from '@twa-dev/sdk'
+import { useMemo } from 'react'
 
 export function useTelegramUser() {
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
+  const user = useMemo(() => {
     try {
-      if (WebApp.initDataUnsafe?.user) {
-        setUser(WebApp.initDataUnsafe.user)
-      }
-    } catch (e) {
-      console.warn('Failed to extract Telegram user data', e)
+      const WebApp = window.Telegram?.WebApp
+      return WebApp?.initDataUnsafe?.user ?? null
+    } catch {
+      return null
     }
   }, [])
 

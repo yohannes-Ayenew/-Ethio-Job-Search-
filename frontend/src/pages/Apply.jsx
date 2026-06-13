@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import WebApp from '@twa-dev/sdk'
 import { API_BASE } from '../utils/api'
+import { useTelegramUser } from '../hooks/useTelegramUser'
 
 export default function Apply() {
   const { id } = useParams()
@@ -9,6 +10,7 @@ export default function Apply() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
+  const telegramUser = useTelegramUser()
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -23,21 +25,19 @@ export default function Apply() {
       WebApp.BackButton.onClick(() => navigate(-1))
     } catch (e) {}
 
-    // Pre-fill from Telegram user data
-    try {
-      const user = WebApp.initDataUnsafe?.user
-      if (user) {
-        setFormData(prev => ({
-          ...prev,
-          full_name: `${user.first_name || ''} ${user.last_name || ''}`.trim()
-        }))
-      }
-    } catch (e) {}
-
     return () => {
       try { WebApp.BackButton.hide() } catch (e) {}
     }
   }, [navigate])
+
+  useEffect(() => {
+    if (telegramUser) {
+      setFormData(prev => ({
+        ...prev,
+        full_name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim()
+      }))
+    }
+  }, [telegramUser])
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))

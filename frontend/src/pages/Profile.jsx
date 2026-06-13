@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import WebApp from '@twa-dev/sdk'
 import { API_BASE } from '../utils/api'
+import { useTelegramUser } from '../hooks/useTelegramUser'
 
 const STATUS_COLORS = {
   pending: 'bg-gray-500/20 text-gray-400',
@@ -18,6 +19,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editData, setEditData] = useState({ phone: '', cv_url: '' })
+  const telegramUser = useTelegramUser()
 
   useEffect(() => {
     try {
@@ -50,7 +52,6 @@ export default function Profile() {
       } catch (err) {
         console.error('Profile init failed:', err)
         // Demo fallback
-        const telegramUser = WebApp.initDataUnsafe?.user
         setUser({
           id: telegramUser?.id || 12345,
           full_name: `${telegramUser?.first_name || 'Demo'} ${telegramUser?.last_name || 'User'}`,
@@ -72,7 +73,7 @@ export default function Profile() {
     return () => {
       try { WebApp.BackButton.hide() } catch (e) {}
     }
-  }, [navigate])
+  }, [navigate, telegramUser])
 
   const handleSave = async () => {
     setSaving(true)

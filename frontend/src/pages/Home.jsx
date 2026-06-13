@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import WebApp from '@twa-dev/sdk'
 import { API_BASE } from '../utils/api'
 import JobCard from '../components/JobCard'
 import SkeletonCard from '../components/SkeletonCard'

@@ -10,6 +10,6 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     class Config:
-        env_file = ".env"
+        env_file = (".env", "../.env")
 
 settings = Settings()

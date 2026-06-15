@@ -89,6 +89,10 @@ class ApplicationService:
 
     @staticmethod
     async def update_application_status(db: AsyncSession, application_id: UUID, data: ApplicationUpdate):
+        import httpx
+        from app.core.config import settings
+        import asyncio
+
         result = await db.execute(
             select(Application).where(Application.id == application_id)
         )
@@ -104,5 +108,26 @@ class ApplicationService:
             redis.delete(f"user_apps:{application.user_id}")
         except Exception:
             pass
+
+        # Send Telegram push notification
+        async def send_notification(user_id: int, status: str, job_id: UUID):
+            try:
+                # Fetch job title for context
+                job_res = await db.execute(select(Job.title, Job.company).where(Job.id == job_id))
+                job_row = job_res.first()
+                job_title = job_row[0] if job_row else "a job"
+                company = job_row[1] if job_row else "a company"
+                
+                message = f"🔔 *Application Update*\n\nYour application for *{job_title}* at _{company}_ has been marked as: *{status.upper()}*."
+                url = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
+                payload = {"chat_id": user_id, "text": message, "parse_mode": "Markdown"}
+                
+                async with httpx.AsyncClient() as client:
+                    await client.post(url, json=payload)
+            except Exception as e:
+                print(f"Failed to send Telegram notification: {e}")
+
+        # Run in background to avoid blocking the HTTP response
+        asyncio.create_task(send_notification(application.user_id, data.status, application.job_id))
 
         return ApplicationResponse.model_validate(application)

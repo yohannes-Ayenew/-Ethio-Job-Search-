@@ -121,3 +121,31 @@ class JobService:
             pass
 
         return new_job
+
+    @staticmethod
+    async def list_pending_jobs(db: AsyncSession):
+        query = select(Job).where(Job.is_approved == False).order_by(Job.created_at.desc())
+        result = await db.execute(query)
+        jobs = result.scalars().all()
+        return [JobResponse.model_validate(j).model_dump(mode="json") for j in jobs]
+
+    @staticmethod
+    async def approve_job(db: AsyncSession, job_id: UUID):
+        result = await db.execute(select(Job).where(Job.id == job_id))
+        job = result.scalar_one_or_none()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        job.is_approved = True
+        await db.commit()
+
+        try:
+            keys = redis.keys("jobs:*")
+            if keys:
+                redis.delete(*keys)
+            redis.delete(f"job:{job_id}")
+            redis.delete("job_categories")
+        except Exception:
+            pass
+
+        return {"message": "Job approved successfully"}

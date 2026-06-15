@@ -3,11 +3,17 @@ import { createRoot } from 'react-dom/client'
 import WebApp from '@twa-dev/sdk'
 import './index.css'
 import App from './App.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { SavedJobsProvider } from './contexts/SavedJobsContext.jsx'
 
 WebApp.ready()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <SavedJobsProvider>
+        <App />
+      </SavedJobsProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

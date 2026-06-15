@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import WebApp from '@twa-dev/sdk'
 import { API_BASE } from '../utils/api'
+import { useSavedJobs } from '../contexts/SavedJobsContext'
 
 export default function JobDetail() {
+  const { savedJobs, toggleSavedJob } = useSavedJobs()
   const { id } = useParams()
   const navigate = useNavigate()
   const [job, setJob] = useState(null)
@@ -147,13 +149,23 @@ export default function JobDetail() {
         </div>
       </div>
 
-      {/* Share button */}
-      <div className="px-4 mt-4">
+      {/* Actions */}
+      <div className="px-4 mt-4 flex gap-2">
+        <button
+          onClick={() => toggleSavedJob(job.id)}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+            savedJobs.includes(job.id) 
+              ? 'bg-accent/20 text-accent hover:bg-accent/30' 
+              : 'bg-white/[0.06] text-white/60 hover:bg-white/10'
+          }`}
+        >
+          {savedJobs.includes(job.id) ? '🔖 Saved' : '📑 Save Job'}
+        </button>
         <button
           onClick={handleShare}
-          className="w-full py-2.5 bg-white/[0.06] text-white/60 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
+          className="flex-1 py-2.5 bg-white/[0.06] text-white/60 rounded-xl text-sm font-medium hover:bg-white/10 transition-colors"
         >
-          📤 Share Job
+          📤 Share
         </button>
       </div>
 

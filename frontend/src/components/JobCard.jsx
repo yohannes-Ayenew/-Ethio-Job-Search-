@@ -1,16 +1,33 @@
 import PropTypes from 'prop-types'
+import { useSavedJobs } from '../contexts/SavedJobsContext'
 
 export default function JobCard({ job, onClick }) {
+  const { savedJobs, toggleSavedJob } = useSavedJobs()
+  const isSaved = savedJobs.includes(job.id)
+
   const daysLeft = job.deadline
     ? Math.max(0, Math.ceil((new Date(job.deadline) - new Date()) / (1000 * 60 * 60 * 24)))
     : null
+
+  const handleBookmark = (e) => {
+    e.stopPropagation()
+    toggleSavedJob(job.id)
+  }
 
   return (
     <div
       onClick={() => onClick(job.id)}
       className="bg-gradient-to-br from-white/[0.08] to-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:border-accent/40 hover:shadow-lg hover:shadow-accent/10 hover:-translate-y-1 active:scale-[0.98]"
     >
-      <h3 className="text-lg font-bold text-white mb-1 leading-tight">{job.title}</h3>
+      <div className="flex justify-between items-start gap-2 mb-1">
+        <h3 className="text-lg font-bold text-white leading-tight">{job.title}</h3>
+        <button 
+          onClick={handleBookmark}
+          className="text-2xl hover:scale-110 transition-transform -mt-1 -mr-1"
+        >
+          {isSaved ? '🔖' : '📑'}
+        </button>
+      </div>
       <p className="text-white/60 text-sm mb-3">{job.company}</p>
 
       <div className="flex flex-wrap gap-2 mb-3">

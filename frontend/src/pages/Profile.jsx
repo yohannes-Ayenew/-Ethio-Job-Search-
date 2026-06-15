@@ -19,6 +19,8 @@ export default function Profile() {
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editData, setEditData] = useState({ phone: '', cv_url: '' })
+  const [activeTab, setActiveTab] = useState('applications')
+  const [savedJobs, setSavedJobs] = useState([])
   const telegramUser = useTelegramUser()
 
   useEffect(() => {
@@ -48,6 +50,11 @@ export default function Profile() {
           const appsRes = await fetch(`${API_BASE}/applications/user/${authData.user.id}`)
           const appsData = await appsRes.json()
           setApplications(Array.isArray(appsData) ? appsData : [])
+
+          // Fetch saved jobs
+          const savedRes = await fetch(`${API_BASE}/users/${authData.user.id}/saved_jobs`)
+          const savedData = await savedRes.json()
+          setSavedJobs(Array.isArray(savedData) ? savedData : [])
         }
       } catch (err) {
         console.error('Profile init failed:', err)
@@ -194,42 +201,92 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* My Applications */}
-        <h2 className="text-white font-semibold mb-3">My Applications</h2>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4 p-1 bg-white/[0.04] border border-white/10 rounded-xl">
+          <button
+            onClick={() => setActiveTab('applications')}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === 'applications' ? 'bg-white/10 text-white shadow-sm' : 'text-white/50 hover:text-white/80'
+            }`}
+          >
+            My Applications
+          </button>
+          <button
+            onClick={() => setActiveTab('saved')}
+            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === 'saved' ? 'bg-white/10 text-white shadow-sm' : 'text-white/50 hover:text-white/80'
+            }`}
+          >
+            Saved Jobs
+          </button>
+        </div>
 
-        {applications.length === 0 ? (
-          <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-8 text-center">
-            <div className="text-4xl mb-3">📝</div>
-            <p className="text-white/60 text-sm">No applications yet</p>
-            <button
-              onClick={() => navigate('/')}
-              className="mt-4 px-6 py-2 bg-accent/20 text-accent rounded-lg text-sm font-medium hover:bg-accent/30 transition-colors"
-            >
-              Browse Jobs
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {applications.map((app) => (
-              <div
-                key={app.id}
-                className="bg-white/[0.04] border border-white/10 rounded-xl p-4 transition-colors hover:border-white/20"
+        {/* Tab Content */}
+        {activeTab === 'applications' ? (
+          applications.length === 0 ? (
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-8 text-center">
+              <div className="text-4xl mb-3">📝</div>
+              <p className="text-white/60 text-sm">No applications yet</p>
+              <button
+                onClick={() => navigate('/')}
+                className="mt-4 px-6 py-2 bg-accent/20 text-accent rounded-lg text-sm font-medium hover:bg-accent/30 transition-colors"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-medium text-sm truncate">{app.job_title}</p>
-                    <p className="text-white/40 text-xs">{app.job_company}</p>
+                Browse Jobs
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {applications.map((app) => (
+                <div
+                  key={app.id}
+                  className="bg-white/[0.04] border border-white/10 rounded-xl p-4 transition-colors hover:border-white/20"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium text-sm truncate">{app.job_title}</p>
+                      <p className="text-white/40 text-xs">{app.job_company}</p>
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${STATUS_COLORS[app.status] || STATUS_COLORS.pending}`}>
+                      {app.status?.charAt(0).toUpperCase() + app.status?.slice(1)}
+                    </span>
                   </div>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${STATUS_COLORS[app.status] || STATUS_COLORS.pending}`}>
-                    {app.status?.charAt(0).toUpperCase() + app.status?.slice(1)}
-                  </span>
+                  <p className="text-white/30 text-xs mt-2">
+                    Applied {new Date(app.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
                 </div>
-                <p className="text-white/30 text-xs mt-2">
-                  Applied {new Date(app.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )
+        ) : (
+          savedJobs.length === 0 ? (
+            <div className="bg-white/[0.04] border border-white/10 rounded-2xl p-8 text-center">
+              <div className="text-4xl mb-3">🔖</div>
+              <p className="text-white/60 text-sm">No saved jobs yet</p>
+              <button
+                onClick={() => navigate('/')}
+                className="mt-4 px-6 py-2 bg-accent/20 text-accent rounded-lg text-sm font-medium hover:bg-accent/30 transition-colors"
+              >
+                Find Jobs
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {savedJobs.map((job) => (
+                <div
+                  key={job.job_id}
+                  onClick={() => navigate(`/job/${job.job_id}`)}
+                  className="bg-white/[0.04] border border-white/10 rounded-xl p-4 transition-colors hover:border-white/20 cursor-pointer"
+                >
+                  <p className="text-white font-medium text-sm truncate mb-1">{job.title}</p>
+                  <p className="text-white/60 text-xs mb-2">{job.company}</p>
+                  <div className="flex gap-2">
+                    <span className="text-white/40 text-xs bg-white/5 px-2 py-0.5 rounded">📍 {job.location}</span>
+                    <span className="text-accent/80 text-xs bg-accent/10 px-2 py-0.5 rounded">{job.job_type}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>

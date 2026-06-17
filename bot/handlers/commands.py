@@ -41,3 +41,34 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🇪🇹 ኢትዮጆብስን እንዴት እንደሚጠቀሙ ለማወቅ /start ይጫኑ"
     )
     await update.message.reply_html(help_text)
+
+import httpx
+
+async def my_jobs_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """List jobs posted by the user."""
+    user_id = update.message.from_user.id
+    api_url = os.getenv("API_URL", "http://backend:8000/api")
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"{api_url}/jobs/user/{user_id}")
+            response.raise_for_status()
+            jobs = response.json()
+            
+            if not jobs:
+                await update.message.reply_text("You haven't posted any jobs yet. 📝")
+                return
+                
+            reply_text = f"📋 <b>Your Posted Jobs ({len(jobs)}):</b>\n\n"
+            for job in jobs:
+                status = "✅ Approved" if job.get("is_approved") else "⏳ Pending"
+                reply_text += f"🔹 <b>{job['title']}</b>\n"
+                reply_text += f"🏢 {job['company']}\n"
+                reply_text += f"Status: {status}\n"
+                reply_text += "──────────────\n"
+                
+            await update.message.reply_html(reply_text)
+            
+    except Exception as e:
+        print(f"Error fetching user jobs: {e}")
+        await update.message.reply_text("❌ Failed to fetch your jobs. Please try again later.")

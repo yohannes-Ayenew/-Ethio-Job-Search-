@@ -149,3 +149,33 @@ class JobService:
             pass
 
         return {"message": "Job approved successfully"}
+
+    @staticmethod
+    async def reject_job(db: AsyncSession, job_id: UUID):
+        result = await db.execute(select(Job).where(Job.id == job_id))
+        job = result.scalar_one_or_none()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        
+        db.delete(job)
+        await db.commit()
+
+        try:
+            keys = redis.keys("jobs:*")
+            if keys:
+                redis.delete(*keys)
+            redis.delete(f"job:{job_id}")
+            redis.delete("job_categories")
+        except Exception:
+            pass
+
+        return {"message": "Job rejected and deleted successfully"}
+
+    @staticmethod
+    async def get_jobs_by_user(db: AsyncSession, user_id: int):
+        result = await db.execute(
+            select(Job)
+            .where(Job.posted_by == user_id)
+            .order_by(Job.created_at.desc())
+        )
+        return result.scalars().all()

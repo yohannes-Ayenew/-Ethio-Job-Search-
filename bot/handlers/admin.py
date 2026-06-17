@@ -83,9 +83,12 @@ async def handle_job_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 response.raise_for_status()
                 await query.edit_message_text(f"✅ Job {job_id} approved!\n\n" + query.message.text)
             elif action == "reject":
-                # For reject, we can just delete the message or ideally call a DELETE API.
-                # Since we don't have a DELETE API for jobs, we'll just remove the message.
-                await query.edit_message_text(f"❌ Job {job_id} rejected.\n\n" + query.message.text)
+                response = await client.delete(
+                    f"{API_URL}/jobs/{job_id}/reject",
+                    headers={"X-Bot-Token": BOT_TOKEN}
+                )
+                response.raise_for_status()
+                await query.edit_message_text(f"❌ Job {job_id} rejected and deleted.\n\n" + query.message.text)
     except Exception as e:
         print(f"Error processing job action: {e}")
         await query.message.reply_text("❌ Failed to process action.")

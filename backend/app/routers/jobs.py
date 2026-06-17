@@ -85,3 +85,19 @@ async def approve_job(
     if x_bot_token != settings.BOT_TOKEN:
         raise HTTPException(status_code=403, detail="Unauthorized")
     return await JobService.approve_job(db, job_id)
+
+@router.delete("/{job_id}/reject")
+async def reject_job(
+    job_id: UUID,
+    x_bot_token: Optional[str] = Header(None, alias="X-Bot-Token"),
+    db: AsyncSession = Depends(get_db)
+):
+    """Reject and delete a job (requires bot token)."""
+    if x_bot_token != settings.BOT_TOKEN:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    return await JobService.reject_job(db, job_id)
+
+@router.get("/user/{user_id}", response_model=List[JobResponse])
+async def list_user_jobs(user_id: int, db: AsyncSession = Depends(get_db)):
+    """List jobs posted by a specific user."""
+    return await JobService.get_jobs_by_user(db, user_id)

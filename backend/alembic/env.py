@@ -17,7 +17,7 @@ if config.config_file_name is not None:
 
 # Import all models so Alembic can detect them
 from app.core.database import Base
-from app.models import User, Job, Application  # noqa: F401
+from app.models import User, Job, Application, SavedJob  # noqa: F401
 
 target_metadata = Base.metadata
 

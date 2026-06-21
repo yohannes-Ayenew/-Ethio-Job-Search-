@@ -97,7 +97,7 @@ async def reject_job(
         raise HTTPException(status_code=403, detail="Unauthorized")
     return await JobService.reject_job(db, job_id)
 
-@router.get("/user/{user_id}", response_model=List[JobResponse])
+@router.get("/user/{user_id}", response_model=list[JobResponse])
 async def list_user_jobs(user_id: int, db: AsyncSession = Depends(get_db)):
     """List jobs posted by a specific user."""
     return await JobService.get_jobs_by_user(db, user_id)

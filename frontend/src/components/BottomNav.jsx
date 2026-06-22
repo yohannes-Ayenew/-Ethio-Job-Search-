@@ -1,37 +1,48 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+const TABS = [
+  { path: '/', icon: '🏠', label: 'Jobs' },
+  { path: '/post-job', icon: '➕', label: 'Post Job' },
+  { path: '/profile', icon: '👤', label: 'Profile' },
+];
+
+const HIDE_ON = ['/job/', '/apply/'];
+
 export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide bottom nav on specific pages like JobDetail or Apply where we have back buttons
-  const hideOnPaths = ['/job/', '/apply/'];
-  const shouldHide = hideOnPaths.some(path => location.pathname.includes(path));
-
+  const shouldHide = HIDE_ON.some(p => location.pathname.includes(p));
   if (shouldHide) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-3 bg-background/90 backdrop-blur-xl border-t border-white/5 z-50">
-      <div className="flex justify-around items-center max-w-md mx-auto">
-        <button
-          onClick={() => navigate('/')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-            location.pathname === '/' ? 'text-accent' : 'text-white/40 hover:text-white/80'
-          }`}
-        >
-          <span className="text-xl">🏠</span>
-          <span className="text-[10px] font-medium">Home</span>
-        </button>
-        <button
-          onClick={() => navigate('/profile')}
-          className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-            location.pathname === '/profile' ? 'text-accent' : 'text-white/40 hover:text-white/80'
-          }`}
-        >
-          <span className="text-xl">👤</span>
-          <span className="text-[10px] font-medium">Profile</span>
-        </button>
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-white/[0.07]">
+      <div className="flex justify-around items-center max-w-md mx-auto py-2 px-3">
+        {TABS.map(({ path, icon, label }) => {
+          const active = location.pathname === path;
+          return (
+            <button
+              key={path}
+              onClick={() => navigate(path)}
+              className={`flex flex-col items-center gap-1 px-4 py-1.5 rounded-2xl transition-all duration-200 ${
+                active
+                  ? 'text-accent'
+                  : 'text-white/35 hover:text-white/70'
+              }`}
+            >
+              <span className={`text-xl transition-transform duration-200 ${active ? 'scale-110' : ''}`}>
+                {icon}
+              </span>
+              <span className={`text-[10px] font-semibold tracking-wide ${active ? 'text-accent' : ''}`}>
+                {label}
+              </span>
+              {active && (
+                <span className="absolute bottom-1 w-1 h-1 bg-accent rounded-full" />
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

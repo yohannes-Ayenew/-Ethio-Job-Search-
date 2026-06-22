@@ -71,7 +71,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-6">
+    <div className="min-h-screen bg-background page-with-nav">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-white/5 px-4 pt-4 pb-3">
         <div className="flex items-center justify-between mb-3">

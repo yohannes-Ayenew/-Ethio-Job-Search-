@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import WebApp from '@twa-dev/sdk'
 import { API_BASE } from '../utils/api'
 import { useTelegramUser } from '../hooks/useTelegramUser'
 
@@ -19,25 +18,29 @@ export default function Apply() {
     cv_url: '',
   })
 
-  useEffect(() => {
-    try {
-      WebApp.BackButton.show()
-      WebApp.BackButton.onClick(() => navigate(-1))
-    } catch (e) {}
-
-    return () => {
-      try { WebApp.BackButton.hide() } catch (e) {}
-    }
-  }, [navigate])
-
+  // Pre-fill name from Telegram
   useEffect(() => {
     if (telegramUser) {
       setFormData(prev => ({
         ...prev,
-        full_name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim()
+        full_name: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
       }))
     }
   }, [telegramUser])
+
+  // Show Telegram back button
+  useEffect(() => {
+    try {
+      const WebApp = window.Telegram?.WebApp
+      if (WebApp) {
+        WebApp.BackButton.show()
+        WebApp.BackButton.onClick(() => navigate(-1))
+      }
+    } catch (e) {}
+    return () => {
+      try { window.Telegram?.WebApp?.BackButton.hide() } catch (e) {}
+    }
+  }, [navigate])
 
   const handleChange = (e) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -47,34 +50,39 @@ export default function Apply() {
     e.preventDefault()
     if (submitting || submitted) return
 
+    const userId = telegramUser?.id
+    if (!userId) {
+      setError('Could not detect your Telegram user ID. Please open this app inside Telegram.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
     try {
-      const userId = WebApp.initDataUnsafe?.user?.id || 0
+      const initData = window.Telegram?.WebApp?.initData || ''
       const res = await fetch(`${API_BASE}/applications`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(initData ? { 'X-Telegram-Init-Data': initData } : {}),
+        },
         body: JSON.stringify({
           job_id: id,
           user_id: userId,
-          cover_note: formData.cover_note,
-          cv_url: formData.cv_url,
+          cover_note: formData.cover_note || null,
+          cv_url: formData.cv_url || null,
         }),
       })
 
       if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.detail || 'Failed to submit')
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.detail || `Error ${res.status}`)
       }
 
       setSubmitted(true)
     } catch (err) {
       setError(err.message)
-      // Show success anyway for demo if API is down
-      if (err.message.includes('fetch')) {
-        setSubmitted(true)
-      }
     } finally {
       setSubmitting(false)
     }
@@ -82,34 +90,32 @@ export default function Apply() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="text-center animate-[fadeIn_0.5s_ease-out]">
-          <div className="text-7xl mb-6 animate-[bounce_1s_ease-in-out]">✅</div>
-          <h1 className="text-2xl font-bold text-white mb-2">Application Submitted!</h1>
-          <p className="text-white/60 mb-8">Good luck! We'll notify you of any updates.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-8 py-3 bg-accent text-background font-bold rounded-xl transition-all hover:shadow-lg hover:shadow-accent/30"
-          >
-            Browse More Jobs
-          </button>
-        </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+        <div className="text-8xl mb-6 animate-bounce-once">✅</div>
+        <h1 className="text-2xl font-bold text-white mb-2">Application Sent!</h1>
+        <p className="text-white/50 text-sm mb-8">Good luck! We'll notify you of any updates.</p>
+        <button
+          onClick={() => navigate('/')}
+          className="w-full max-w-xs py-4 bg-accent text-background font-bold rounded-2xl text-base transition-all hover:shadow-lg hover:shadow-accent/30 active:scale-[0.97]"
+        >
+          Browse More Jobs
+        </button>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-background pb-6">
-      <div className="px-4 pt-6">
+      <div className="px-5 pt-6">
         <button
           onClick={() => navigate(-1)}
-          className="mb-4 text-white/40 hover:text-white text-sm transition-colors"
+          className="mb-5 flex items-center gap-2 text-white/40 hover:text-white text-sm transition-colors"
         >
           ← Back
         </button>
 
         <h1 className="text-xl font-bold text-white mb-1">Apply for this Job</h1>
-        <p className="text-white/40 text-sm mb-6">Fill in your details below</p>
+        <p className="text-white/40 text-sm mb-6">Fill in your details to submit your application</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Full Name */}
@@ -122,7 +128,7 @@ export default function Apply() {
               onChange={handleChange}
               required
               className="w-full bg-white/[0.06] border border-white/10 rounded-xl py-3 px-4 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-colors"
-              placeholder="Enter your full name"
+              placeholder="Your full name"
             />
           </div>
 
@@ -141,20 +147,20 @@ export default function Apply() {
 
           {/* Cover Note */}
           <div>
-            <label className="block text-white/60 text-xs font-medium mb-1.5">Cover Note (optional)</label>
+            <label className="block text-white/60 text-xs font-medium mb-1.5">Cover Note <span className="text-white/30">(optional)</span></label>
             <textarea
               name="cover_note"
               value={formData.cover_note}
               onChange={handleChange}
               rows={4}
               className="w-full bg-white/[0.06] border border-white/10 rounded-xl py-3 px-4 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-colors resize-none"
-              placeholder="Tell them why you're a great fit..."
+              placeholder="Why are you a great fit for this role?"
             />
           </div>
 
           {/* CV Link */}
           <div>
-            <label className="block text-white/60 text-xs font-medium mb-1.5">CV Link</label>
+            <label className="block text-white/60 text-xs font-medium mb-1.5">CV / Resume Link <span className="text-white/30">(optional)</span></label>
             <input
               type="url"
               name="cv_url"
@@ -163,20 +169,19 @@ export default function Apply() {
               className="w-full bg-white/[0.06] border border-white/10 rounded-xl py-3 px-4 text-white text-sm placeholder:text-white/30 focus:outline-none focus:border-accent/50 transition-colors"
               placeholder="Google Drive, LinkedIn, or Dropbox link"
             />
-            <p className="text-white/30 text-xs mt-1">Share a link to your CV/resume</p>
+            <p className="text-white/25 text-xs mt-1">Paste a link to your CV or LinkedIn profile</p>
           </div>
 
           {error && (
-            <div className="bg-red-500/15 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-red-400 text-sm">
               {error}
             </div>
           )}
 
-          {/* Submit */}
           <button
             type="submit"
-            disabled={submitting || submitted}
-            className="w-full py-3.5 bg-accent text-background font-bold rounded-xl text-base transition-all hover:shadow-lg hover:shadow-accent/30 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            disabled={submitting}
+            className="w-full py-4 bg-accent text-background font-bold rounded-2xl text-base transition-all hover:shadow-lg hover:shadow-accent/30 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
           >
             {submitting ? (
               <>
@@ -184,11 +189,9 @@ export default function Apply() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Submitting...
+                Submitting…
               </>
-            ) : (
-              'Submit Application 🚀'
-            )}
+            ) : 'Submit Application 🚀'}
           </button>
         </form>
       </div>

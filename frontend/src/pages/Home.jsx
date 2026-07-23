@@ -197,6 +197,15 @@ export default function Home() {
           </button>
         </div>
       )}
+
+      {/* Floating Action Button for Posting Jobs */}
+      <button
+        onClick={() => navigate('/post-job')}
+        className="fixed bottom-[88px] right-5 w-14 h-14 bg-accent text-background rounded-full shadow-lg shadow-accent/40 flex items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-all z-30"
+        aria-label="Post a Job"
+      >
+        +
+      </button>
     </div>
   )
 }

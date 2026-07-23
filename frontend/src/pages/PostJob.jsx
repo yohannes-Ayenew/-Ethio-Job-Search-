@@ -26,8 +26,7 @@ export default function PostJob() {
     description: '',
   })
 
-  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user
-  const initData = window.Telegram?.WebApp?.initData || ''
+  // Auth is handled inside handleSubmit to always use the latest initData
 
   useEffect(() => {
     try {
@@ -61,16 +60,20 @@ export default function PostJob() {
   const handleSubmit = async () => {
     setSubmitting(true)
     setError(null)
+
+    const initData = window.Telegram?.WebApp?.initData || ''
+    if (!initData) {
+      setError('Please open this app inside Telegram to post a job.')
+      setSubmitting(false)
+      return
+    }
+
     try {
       const res = await fetch(`${API_BASE}/jobs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(initData
-            ? { 'X-Telegram-Init-Data': initData }
-            : tgUser
-            ? { 'X-Bot-Token': import.meta.env.VITE_BOT_TOKEN || '', 'telegram-user-id': String(tgUser.id) }
-            : {}),
+          'X-Telegram-Init-Data': initData,
         },
         body: JSON.stringify(form),
       })
